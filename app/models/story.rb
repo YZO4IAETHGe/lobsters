@@ -1154,6 +1154,31 @@ class Story < ApplicationRecord
       .options[:maximum]
   end
 
+  def markeddown_description_with_youtube_preview
+
+    doc = Nokogiri::HTML::DocumentFragment.parse(markeddown_description)
+    doc.css('a').each do |link|
+      url = link['href']
+      if youtube_video_id(url) 
+        iframe = %(
+          <div class="youtube-preview">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/#{youtube_video_id(url)}"
+                    frameborder="0" allowfullscreen></iframe>
+          </div>
+        )
+        link.replace(Nokogiri::HTML.fragment(iframe))
+      end
+    end
+
+    doc.to_html
+  end
+
+  def youtube_video_id(url)
+    regex = %r{(?:youtube\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)?/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})}i
+    match = url.match(regex)
+    match[1] if match
+  end
+
   private
 
   def valid_canonical_uri?(url)
